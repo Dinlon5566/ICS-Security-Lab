@@ -1,4 +1,10 @@
 #!/usr/bin/python
+
+############################################
+# 使用 Socket 發送手動輸入的 Modbus TCP Payloads
+# 需 sudo 權限
+# Author: @dinlon5566 2024/06/27
+############################################
 import socket
 from time import sleep
 

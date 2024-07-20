@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 ############################################
-# 使用 Scapy 發送 Modbus TCP Payloads
-# 若使用 非自身IP，需 ARP Spoofing
-# 需 sudo 權限 跟一些運氣
+# 使用 Scapy 發送手動輸入的 Modbus TCP Payloads
+# 可以偽造來源，若使用 非自身 IP ，需 ARP Spoofing
+# 需 sudo 權限
 # Author: @dinlon5566 2024/06/27
 ############################################
 

